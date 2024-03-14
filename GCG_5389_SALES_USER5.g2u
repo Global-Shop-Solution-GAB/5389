@@ -1,0 +1,37 @@
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Author: GaryB
+'Date:   02/11/19
+'Customer: Marchant Schmidt, Inc.
+'We will take the users id and enter it in USER_5 on the order_header table for New sales orders whenever the "save" button is hit. 
+'Use post-save hook # 11872
+'GCG_5389_Sales_User5.g2u 
+
+F.Intrinsic.Control.Try
+V.Local.sError.Declare(String, "")
+v.Local.sSQL.Declare(String)
+v.Local.sOrderNo.Declare(String)
+
+'check to make sure the user is creating New sales orders
+F.Intrinsic.Control.If(V.Caller.Switches,=,"N")
+
+'add user id to user_5 field from POST-SAVE HOOK #11872 on new sales order screen oes0200A
+   f.Intrinsic.Control.If(v.Caller.Hook,=,11872)
+      f.Intrinsic.String.LPad("v.Passed.000003","0",7,v.Local.sOrderNo)
+      f.Intrinsic.String.Build("UPDATE ORDER_HEADER SET USER_5 = '{0}' WHERE ORDER_NO = '{1}' and RECORD_TYPE = 'A';",v.Caller.User,v.Local.sOrderNo,v.Local.sSQL)
+
+'open DB connection
+      f.ODBC.Connection!Con.OpenCompanyConnection
+      F.ODBC.Connection!Con.Execute(v.Local.sSQL)
+'close the DB connection
+      f.ODBC.Connection!Con.Close      
+   f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Catch
+    F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+    F.Intrinsic.UI.Msgbox(V.Local.sError)
+F.Intrinsic.Control.EndTry
+Program.Sub.Main.End
